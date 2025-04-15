@@ -11,9 +11,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 load_dotenv()
 
-# Importa o Base e os modelos
-from app.core.database import Base
-from app.generator.models import UrlShorted
+from app.core.database import Base  # noqa: F401, E402
+from app.generator.models import UrlShorted  # noqa: F401, E402
 
 config = context.config
 fileConfig(config.config_file_name)

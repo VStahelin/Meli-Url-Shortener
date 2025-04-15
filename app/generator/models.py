@@ -7,3 +7,4 @@ class UrlShorted(Base):
 
     id = Column(String, primary_key=True, index=True)
     url = Column(String, index=False)
+    access_count = Column(Integer, default=0)
