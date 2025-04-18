@@ -14,41 +14,6 @@ Cria um serviço encurtador de URL atendendo os seguintes requisitos:
 
 ---
 
-# Primeira etapa - Setup
-
-### Must Have
-- FastAPI como framework base.
-  - Com worktree por feature/domain.
-- Redis para cachear as URLs.
-- Postgres para persistir as URLs.
-  - Com SQLAlchemy e Alembic.
-- Docker para containerizar a aplicação.
-
-### Nice to Have
-- Balanceador de carga.
-- Observabilidade.
-  - Prometheus para métricas.
-
----
-
-# Segunda etapa - Funcionalidades
-- Criar um endpoint para encurtar a URL.
-  - Criar uma URL curta a partir de uma URL longa.
-  - Retornar a URL curta criada.
-- Criar um endpoint para redirecionar a URL curta.
-  - Criar um endpoint que redirecione a URL curta para a URL longa.
-- Criar um endpoint para obter estatísticas.
-  - Criar um endpoint que retorne as estatísticas da URL curta.
-- Criar um endpoint para deletar a URL curta.
-
----
-
-# Terceira etapa - Teste de Performance
-- Teste de carga.
-  - Usar ferramenta de teste de carga para verificar a performance da aplicação.
-
----
-
 # Topologia da Solução
 
 Para suportar 50k RPS com baixa latência (<10ms em 90% dos casos), a arquitetura segue os seguintes princípios:
@@ -78,30 +43,14 @@ Para suportar 50k RPS com baixa latência (<10ms em 90% dos casos), a arquitetur
 
 ---
 
-# Progresso
-
-- [x] Setup do projeto (FastAPI, Redis, Postgres, Docker).
-- [x] Montar diagrama de topologia (Atual, e escalável).
-- [X] Criar fluxograma base.
-- [X] Adicionar diagramas
-- [x] Criar um endpoint para encurtar a URL.
-- [x] Criar um endpoint para redirecionar a URL curta.
-- [x] Criar um endpoint para deletar a URL curta.
-- [x] Integrar Prometheus.
-- [x] Criar um endpoint para métricas do Prometheus.
-- [x] Criar um endpoint para obter estatísticas simplificadas.
-- [x] Teste simplificado de carga.
-
----
-
-# Notas
+# Notas pessoais
 
 - Precisa ser um script de baixa latência e de alta escalabilidade, ou seja, preciso pensar nos seguintes pontos:
 - Escalabilidade horizontal para N pods:
   - Kubernetes gerencia facilmente.
   - Exemplo: 70% de uso por mais de X minutos cria um novo pod.
 - Escalabilidade vertical caso um pod tenha múltiplos núcleos:
-  - Um webserver Uvicorn consegue gerenciar isso facilmente distribuindo workers.
+  - Um webserver Gunicorn consegue gerenciar isso facilmente distribuindo workers.
   - Regra base: (2 x núcleos) + 1 workers.
 - Race/concurrency na geração da URL:
   - Deve ser controlado por locks, mas não há risco, temos até 1000ms de resposta.
