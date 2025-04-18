@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, String
 from app.core.database import Base
 
 
@@ -7,4 +7,3 @@ class UrlShorted(Base):
 
     id = Column(String, primary_key=True, index=True)
     url = Column(String, index=False)
-    access_count = Column(Integer, default=0)

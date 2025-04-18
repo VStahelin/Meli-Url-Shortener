@@ -3,10 +3,9 @@ import os
 
 from sqlalchemy import text
 
-from app.core.cache import redis_client, DEFAULT_TIMEOUT
+from app.core.cache import redis_client
 from app.core.database import SessionLocal
-
-BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
+from app.settings import CACHE_DEFAULT_TIMEOUT, BASE_URL
 
 
 def generate_url_token(url: str) -> str:
@@ -39,7 +38,7 @@ def generate_url_token(url: str) -> str:
             return new_token
 
         token = _generate_token()
-        redis_client.set(token, url, ex=DEFAULT_TIMEOUT)
+        redis_client.set(token, url, ex=CACHE_DEFAULT_TIMEOUT)
         return f"{BASE_URL}/{token}"
 
 
@@ -61,7 +60,7 @@ def retrieve_url(token: str) -> str | None:
 
         url = result[0]
 
-    redis_client.set(token, url, ex=DEFAULT_TIMEOUT)
+    redis_client.set(token, url, ex=CACHE_DEFAULT_TIMEOUT)
     redis_client.incr(f"stats:{token}")
     return url
 
@@ -81,39 +80,4 @@ def delete_url_token(token: str) -> None:
             """
         )
         db.execute(stmt, {"id": token})
-        db.commit()
-
-
-def consolidate_access_counts() -> None:
-    """
-    Consolidates access counts from Redis to the database.
-
-    This function retrieves access count statistics stored in Redis for
-    shortened URLs, updates the corresponding records in the database,
-    and removes the processed keys from Redis.
-    """
-
-    keys = redis_client.keys("stats:*")
-
-    with SessionLocal() as db:
-        for key in keys:
-            token = key.split("stats:")[1]
-            count = redis_client.getdel(key)
-
-            if count is None:
-                continue
-
-            count = int(count)
-
-            db.execute(
-                text(
-                    """
-                UPDATE url_shortened
-                SET access_count = access_count + :count
-                WHERE id = :id
-            """
-                ),
-                {"id": token, "count": count},
-            )
-
         db.commit()

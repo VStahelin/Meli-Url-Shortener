@@ -1,16 +1,11 @@
-import os
-
 import httpx
 from fastapi import APIRouter
 
 
 from app.generator.schema import RouteStats, StandardResponse
+from app.settings import PROMETHEUS_URL
 
 router = APIRouter(prefix="/statics", tags=["metrics"])
-
-PROMETHEUS_HOST = os.getenv("PROMETHEUS_URL", "http://prometheus_container")
-PROMETHEUS_PORT = os.getenv("PROMETHEUS_PORT", "9090")
-PROMETHEUS_URL = f"{PROMETHEUS_HOST}:{PROMETHEUS_PORT}"
 
 
 @router.get("/", response_model=StandardResponse[list[RouteStats]])
