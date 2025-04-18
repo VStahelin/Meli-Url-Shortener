@@ -1,41 +1,51 @@
 import re
-from urllib.parse import unquote
+from urllib.parse import urlparse
 
 
-from urllib.parse import quote
 
-
-def encode_url(url: str) -> str:
+def validate_url_scheme(url: str) -> str:
     """
-    Prevents dangerous URL schemes and encodes the URL safely for storage.
+    Validates a URL to ensure it uses a safe scheme and doesn't contain known malicious patterns.
+
+    Args:
+        url (str): The URL to validate.
+
+    Returns:
+        str: The validated URL if considered safe.
+
+    Raises:
+        ValueError: If the URL contains dangerous schemes or patterns.
     """
-    if url.startswith(("javascript:", "data:")):
-        raise ValueError("Invalid URL")
+    parsed = urlparse(url)
 
-    return quote(url, safe="")
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError("URL must start with http:// or https:// and include a valid domain")
 
+    dangerous_patterns = [
+        r"(javascript:|vbscript:|data:)",
+        r"(<script|</script>)",
+        r"base64,",
+    ]
 
-def decode_url(url: str) -> str:
-    """
-    Decodes the URL safely.
-    """
-    decoded_url = unquote(url)
+    for pattern in dangerous_patterns:
+        if re.search(pattern, url, re.IGNORECASE):
+            raise ValueError("URL contains disallowed scheme or pattern")
 
-    return decoded_url
+    return url
 
 
 def is_safe_url_path(path: str) -> bool:
     """
-    Checks if the URL path is safe:
-    - Must not contain suspicious patterns
+    Validates if the provided URL token is safe.
+
+    A safe token must:
+    - Have exactly 6 characters
+    - Contain only alphanumeric characters (a-z, A-Z, 0-9)
+
+    Args:
+        path (str): The token extracted from the URL path.
+
+    Returns:
+        bool: True if the token is safe, False otherwise.
     """
-
-    decoded_path = unquote(path)
-
-    if "../" in decoded_path or "./" in decoded_path:
-        return False
-
-    if not re.match(r"^[a-zA-Z0-9_\-]+$", decoded_path):
-        return False
-
-    return True
+    return len(path) == 6 and path.isalnum()

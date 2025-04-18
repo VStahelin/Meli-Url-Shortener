@@ -18,7 +18,12 @@ services:
     env_file: *env_file
     volumes:
       - .:/src
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --workers 6
+    command: >
+      gunicorn app.main:app -w 12 -k uvicorn.workers.UvicornWorker
+      -b 0.0.0.0:8000
+      --access-logfile -
+      --error-logfile -
+      --log-level info
     networks:
       - backend
 

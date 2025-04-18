@@ -10,7 +10,10 @@ from app.generator.schema import (
     DeleteURLResponse,
 )
 from app.generator.service import generate_url_token, retrieve_url, delete_url_token
-from app.generator.utils import is_safe_url_path, encode_url, decode_url
+from app.generator.utils import (
+    is_safe_url_path,
+    validate_url_scheme,
+)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -37,7 +40,7 @@ async def get_url(url_id: str, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Unsafe URL provided")
 
     if url := await retrieve_url(url_id, db):
-        return decode_url(url)
+        return url
 
     raise HTTPException(status_code=404, detail="URL not found")
 
@@ -58,7 +61,7 @@ async def generate_url(
         dict: A dictionary containing the generated token.
     """
     try:
-        received_url = encode_url(data.url)
+        received_url = validate_url_scheme(data.url)
         shortened_url = await generate_url_token(received_url, db)
         return {"success": True, "data": {"url": shortened_url}}
     except ValueError as e:
