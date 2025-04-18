@@ -6,7 +6,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 from dotenv import load_dotenv
 
-from app.settings import DATABASE_URL
+from app.settings import SYNC_DATABASE_URL as DATABASE_URL
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
