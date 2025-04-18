@@ -83,7 +83,7 @@ Para suportar 50k RPS com baixa latência (<10ms em 90% dos casos), a arquitetur
 - [x] Setup do projeto (FastAPI, Redis, Postgres, Docker).
 - [x] Montar diagrama de topologia (Atual, e escalável).
 - [X] Criar fluxograma base.
-- [ ] Adicionar diagramas
+- [X] Adicionar diagramas
 - [x] Criar um endpoint para encurtar a URL.
 - [x] Criar um endpoint para redirecionar a URL curta.
 - [x] Criar um endpoint para deletar a URL curta.
@@ -165,6 +165,8 @@ Certifique-se de ter os seguintes itens instalados:
 # Rotas da API
 
 #### Criar URL encurtada
+![image](https://github.com/user-attachments/assets/e78bc759-eaf4-4608-ae7a-faccb79f4b1a)
+
 - **POST /**  
   Corpo:
   ```json
@@ -183,12 +185,14 @@ Certifique-se de ter os seguintes itens instalados:
   ```
 
 #### Redirecionar URL
+![image](https://github.com/user-attachments/assets/ea49442b-70dc-496b-bda9-025d04ade0fd)
 
 - **GET /{url_id}**  
   Exemplo: `/XXYYZZ`  
   Redireciona para a URL original.
 
 #### Deletar URL encurtada
+![image](https://github.com/user-attachments/assets/a3b23568-751a-4c83-b775-d3561057a330)
 
 - **DELETE /{url_id}**  
   Exemplo: `/XXYYZZ`  
