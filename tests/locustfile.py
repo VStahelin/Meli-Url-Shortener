@@ -5,14 +5,15 @@ import random
 class WebsiteUser(HttpUser):
     wait_time = between(0.9, 1.1)
     """
-    locust -f locustfile.py --headless -u 1000 -r 100 --host http://localhost:8000 --run-time 1m --csv locust_rps1000
+    locust -f tests/locustfile.py --headless -u 1000 -r 100 --host http://localhost:8000 --run-time 1m --csv locust_rps1000 
     """
 
     # Update with some urls(pre created) to randomize
     endpoints = [
-        "/_RJDQLde",
-        "/YjIgCmZX",
-        "/gKGb_DLZ",
+        "/G3WKZH",
+        "/XTU65M",
+        "/1DS2VS",
+        "/EUURQP",
     ]
 
     @task(10)

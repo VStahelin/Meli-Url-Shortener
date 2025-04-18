@@ -113,6 +113,35 @@ Para suportar 50k RPS com baixa latência (<10ms em 90% dos casos), a arquitetur
 
 ---
 
+# Analize teste de Performance
+### Teste local, um único container/pod docker, 12 workers
+
+| Métrica                | 100 RPS       | 1000 RPS      |
+|------------------------|---------------|---------------|
+| Tempo médio (avg)      | 3.84 ms       | 12.80 ms      |
+| Mediana (p50)          | 3 ms          | 6 ms          |
+| Tempo mínimo           | 1.34 ms       | 1.27 ms       |
+| Tempo máximo           | 162.87 ms     | 414.38 ms     |
+| p75                    | 3 ms          | 10 ms         |
+| p80                    | 3 ms          | 12 ms         |
+| p90                    | 4 ms          | 22 ms         |
+| p95                    | 5 ms          | 53 ms         |
+| p98                    | 6 ms          | 110 ms        |
+| p99                    | 57 ms         | 150 ms        |
+| p99.9                  | 74 ms         | 240 ms        |
+| p99.99                 | 160 ms        | 390 ms        |
+| p100                   | 160 ms        | 410 ms        |
+| Requisições totais     | 5921          | 54323         |
+
+
+**Minha interpretação:**  
+No teste com 1000 RPS, não consegui manter 90% das requisições abaixo de 10 ms, o que já era esperado, porem ficou perto. Mesmo com um código bem otimizado, encontrei limitações naturais de performance do Python para lidar com uma carga tão alta.
+
+Em uma aplicação real, com uma meta tão agressiva (como 50k RPS abaixo de 10 ms), eu definitivamente não usaria Python como escolha principal. Mas fiquei satisfeito com o resultado: o código respondeu bem e mostrou que a arquitetura funciona, mesmo sob estresse.
+
+---
+
+
 # Como rodar o projeto
 
 Este projeto já está configurado para ser executado em ambiente local utilizando Docker. O arquivo `.env` já contém todas as variáveis necessárias, portanto **nenhuma alteração é requerida** antes da execução.
