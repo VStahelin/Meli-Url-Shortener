@@ -1,49 +1,49 @@
-﻿# Objetivo Geral
+﻿# 📌 Objetivo Geral
 
 Cria um serviço encurtador de URL atendendo os seguintes requisitos:
 
-- Dada uma URL longa, retorne uma URL curta.
-- Dada uma URL curta, retorne a URL longa original.
-- Permita obter estatísticas sobre as URLs encurtadas.
-- Consiga lidar com solicitações em grande escala.
-- Dar conta de 50k requisições por segundo. (Quando em larga escala)
-- 90% das requisições sejam atendidas em menos de 10ms.
-- Criação da URL não pode demorar mais que 1000ms.
-- Permita a deleção das URLs curtas quando necessário.
-- Garanta que, ao acessar uma URL curta válida no navegador, o usuário seja redirecionado para a URL longa.
+- Dada uma URL longa, retorne uma URL curta.  
+- Dada uma URL curta, retorne a URL longa original.  
+- Permita obter estatísticas sobre as URLs encurtadas.  
+- Consiga lidar com solicitações em grande escala.  
+- Dar conta de 50k requisições por segundo (quando em larga escala).  
+- 90% das requisições sejam atendidas em menos de 10ms.  
+- Criação da URL não pode demorar mais que 1000ms.  
+- Permita a deleção das URLs curtas quando necessário.  
+- Garanta que, ao acessar uma URL curta válida no navegador, o usuário seja redirecionado para a URL longa.  
 
 ---
 
-# Topologia da Solução
-
-Para suportar 50k RPS com baixa latência (<10ms em 90% dos casos), a arquitetura segue os seguintes princípios:
+# 🧠 Topologia da Solução
 
 ## Diagrama Geral
 
-- Um balanceador de carga distribui as requisições entre múltiplos pods do serviço FastAPI.
-- Cada pod pode escalar horizontalmente com base no uso de CPU ou número de requisições por segundo, via HPA (Horizontal Pod Autoscaler).
-- A resolução da URL curta ocorre majoritariamente via Redis (cache), reduzindo drasticamente o tempo de resposta.
-- Em caso de cache miss, a aplicação consulta o banco de dados PostgreSQL.
-- As respostas são redirecionadas imediatamente após a resolução.
-- Métricas e rastreamentos são enviados para Prometheus e OpenTelemetry Collector.
-- Os dados são visualizados através do Grafana.
+Para suportar 50k RPS com baixa latência (<10ms em 90% dos casos), a arquitetura segue os seguintes princípios:
 
-## Componentes principais:
+- Um balanceador de carga distribui as requisições entre múltiplos pods do serviço FastAPI.  
+- Cada pod pode escalar horizontalmente com base no uso de CPU ou número de requisições por segundo (HPA).  
+- A resolução da URL curta ocorre majoritariamente via Redis (cache).  
+- Em caso de cache miss, a aplicação consulta o banco de dados PostgreSQL.  
+- As respostas são redirecionadas imediatamente após a resolução.  
+- Métricas e rastreamentos são enviados para Prometheus e OpenTelemetry Collector.  
+- Visualização via Grafana.  
+
+## Componentes Principais
+
 ![image](https://github.com/user-attachments/assets/eb6eb5ce-0f2c-408a-9d89-2f6ea4c3184b)
 
-
-- **Load Balancer:** distribui as requisições de forma balanceada.
-- **App Pods (FastAPI):** processam requisições, escalam horizontalmente via Kubernetes.
-- **Redis:** responde pela maior parte dos acessos (cache quente), com capacidade para lidar com 100k+ RPS.
-- **PostgreSQL:** base de persistência, com uso secundário no fluxo de redirecionamento.
-- **Observabilidade:** Prometheus e OpenTelemetry monitoram latência, throughput e rastreiam requisições.
-- **Escalabilidade:**
-  - Horizontal para lidar com volume.
-  - Vertical para uso eficiente de núcleos com múltiplos workers Uvicorn.
+- **Load Balancer**: distribui as requisições de forma balanceada  
+- **App Pods (FastAPI)**: processam requisições, escalam via Kubernetes  
+- **Redis**: cache quente, capaz de lidar com +100k RPS  
+- **PostgreSQL**: persistência principal, uso secundário no redirecionamento  
+- **Observabilidade**: Prometheus + OpenTelemetry  
+- **Escalabilidade**:
+  - Horizontal: mais pods
+  - Vertical: múltiplos workers por pod (Uvicorn)
 
 ---
 
-# Notas pessoais
+# 🧾 Notas Pessoais
 
 - Precisa ser um script de baixa latência e de alta escalabilidade, ou seja, preciso pensar nos seguintes pontos:
 - Escalabilidade horizontal para N pods:
@@ -62,87 +62,49 @@ Para suportar 50k RPS com baixa latência (<10ms em 90% dos casos), a arquitetur
 
 ---
 
-# Analize teste de Performance
-### Teste local, um único container/pod docker, 12 workers
+# 🚀 Análise de Performance
 
-| Métrica                | 100 RPS       | 1000 RPS      |
-|------------------------|---------------|---------------|
-| Tempo médio (avg)      | 3.84 ms       | 12.80 ms      |
-| Mediana (p50)          | 3 ms          | 6 ms          |
-| Tempo mínimo           | 1.34 ms       | 1.27 ms       |
-| Tempo máximo           | 162.87 ms     | 414.38 ms     |
-| p75                    | 3 ms          | 10 ms         |
-| p80                    | 3 ms          | 12 ms         |
-| p90                    | 4 ms          | 22 ms         |
-| p95                    | 5 ms          | 53 ms         |
-| p98                    | 6 ms          | 110 ms        |
-| p99                    | 57 ms         | 150 ms        |
-| p99.9                  | 74 ms         | 240 ms        |
-| p99.99                 | 160 ms        | 390 ms        |
-| p100                   | 160 ms        | 410 ms        |
-| Requisições totais     | 5921          | 54323         |
+As análises de performance, incluindo todos os dados coletados e os cenários testados (como diferentes taxas de requisição e configurações de workers), estão documentadas de forma detalhada no link abaixo:
 
+📄 [Google Docs - Análise de Performance](https://docs.google.com/document/d/1eVI0TtzehebV0zNoT8cG2zof1yLMxJCNnUBRXXCVEeg/edit?usp=sharing)
 
-**Minha interpretação:**  
-No teste com 1000 RPS, não consegui manter 90% das requisições abaixo de 10 ms, o que já era esperado, porem ficou perto. Mesmo com um código bem otimizado, encontrei limitações naturais de performance do Python para lidar com uma carga tão alta.
-
-Em uma aplicação real, com uma meta tão agressiva (como 50k RPS abaixo de 10 ms), eu definitivamente não usaria Python como escolha principal. Mas fiquei satisfeito com o resultado: o código respondeu bem e mostrou que a arquitetura funciona, mesmo sob estresse.
+Esse material inclui a metodologia utilizada, gráficos e interpretação dos resultados obtidos.
 
 ---
 
+# 🧪 Como Rodar o Projeto
 
-# Como rodar o projeto
-
-Este projeto já está configurado para ser executado em ambiente local utilizando Docker. O arquivo `.env` já contém todas as variáveis necessárias, portanto **nenhuma alteração é requerida** antes da execução.
+Este projeto já está configurado para execução com Docker. O `.env` está pronto — **nenhuma alteração necessária**.
 
 ## Pré-requisitos
 
-Certifique-se de ter os seguintes itens instalados:
-
-- [Docker](https://www.docker.com/)
+- [Docker](https://www.docker.com/)  
 - [Docker Compose](https://docs.docker.com/compose/install/)
 
-## Passo a passo
+## Passo a Passo
 
-1. **Clone o repositório:**
+```bash
+git clone https://github.com/VStahelin/Meli-Url-Shortener
+cd seu-repositorio
+docker compose up --build
+```
 
-   ```bash
-   git clone https://github.com/seu-usuario/seu-repositorio.git
-   cd seu-repositorio
-   ```
+- Sobe FastAPI, Redis, PostgreSQL e Prometheus.
+- Exposto em `http://localhost:8000`
 
-2. **Suba os containers:**
+### Métricas Prometheus
 
-   ```bash
-   docker compose up --build
-   ```
-
-   Isso irá:
-   - Subir o serviço FastAPI (API principal).
-   - Subir o banco de dados PostgreSQL.
-   - Subir o Redis para cache.
-   - Expor a aplicação na porta `8000`.
-
-3. **Acesse a API:**
-
-   A API estará disponível em:
-   ```
-   http://localhost:8000
-   ```
-
-   Você pode testar as rotas diretamente via navegador, Postman ou ferramentas de terminal como `curl`.
-
-4. **Acesse as métricas Prometheus:**
-
-   ```
-   http://localhost:8000/metrics
-   ```
+Acesse via:
+```
+http://localhost:8000/metrics
+```
 
 ---
 
-# Rotas da API
+# 🌐 Rotas da API
 
-#### Criar URL encurtada
+### Criar URL encurtada
+
 ![image](https://github.com/user-attachments/assets/e78bc759-eaf4-4608-ae7a-faccb79f4b1a)
 
 - **POST /**  
@@ -162,14 +124,20 @@ Certifique-se de ter os seguintes itens instalados:
   }
   ```
 
-#### Redirecionar URL
+---
+
+### Redirecionar URL
+
 ![image](https://github.com/user-attachments/assets/ea49442b-70dc-496b-bda9-025d04ade0fd)
 
 - **GET /{url_id}**  
   Exemplo: `/XXYYZZ`  
   Redireciona para a URL original.
 
-#### Deletar URL encurtada
+---
+
+### Deletar URL encurtada
+
 ![image](https://github.com/user-attachments/assets/a3b23568-751a-4c83-b775-d3561057a330)
 
 - **DELETE /{url_id}**  
@@ -184,7 +152,10 @@ Certifique-se de ter os seguintes itens instalados:
   }
   ```
 
-#### Estatísticas de uso
+---
+
+### Estatísticas de uso
+
 - **GET /statics/**  
   Resposta:
   ```json
@@ -203,25 +174,74 @@ Certifique-se de ter os seguintes itens instalados:
   }
   ```
 
-# Testes de Performance com Locust
+---
 
-Este projeto possui um arquivo `locustfile.py` já configurado para testar carga no endpoint de redirecionamento (`GET /{url_id}`).
-Necessita-se criar algumas urls encurtadas e substituí-las dentro da lista.
+# ⚙️ Testes de Performance com Locust
 
-### Executar Locust em modo headless
+Já existe um `locustfile.py` configurado para testar o endpoint `GET /{url_id}`. Basta garantir que URLs válidas estejam criadas na base.
+
+### Comando (modo headless)
 
 ```bash
 locust -f tests/locustfile.py --headless -u 1000 -r 100 --host http://localhost:8000 --run-time 1m --csv locust_rps1000
 ```
 
-**Parâmetros utilizados:**
-- `-u 1000`: total de usuários simultâneos
-- `-r 100`: número de novos usuários por segundo
-- `--run-time 1m`: duração do teste (1 minuto)
-- `--csv`: salva resultados em arquivos `.csv` para análise posterior
-
-Os endpoints testados são definidos no array `endpoints` dentro do script, e devem conter URLs válidas que já existam na base para simular redirecionamento real.
+Parâmetros:
+- `-u 1000`: usuários simultâneos
+- `-r 100`: novos usuários por segundo
+- `--csv`: salva os resultados em arquivos `.csv` para análise posterior
 
 ### Output esperado
-- Os arquivos `locust_rps1000_stats.csv` e `locust_rps1000_failures.csv` conterão estatísticas de tempo de resposta e erros.
-- A métrica principal analisada é o tempo médio de resposta e o percentual de requisições abaixo de 10ms.
+
+- `locust_rps1000_stats.csv` e `locust_rps1000_failures.csv`
+- Principais análises:
+  - Tempo médio de resposta
+  - Percentual de requisições abaixo de 10ms
+
+---
+
+### 🧪 Testando com múltiplos workers (modo distribuído com interface web)
+
+Para simular cargas maiores e aproveitar múltiplos núcleos da máquina, é possível rodar o Locust em modo distribuído — com **1 master**, **interface web** e **N workers** conectados, permitindo escalar o volume de requisições conforme o hardware disponível.
+
+https://docs.locust.io/en/stable/running-distributed.html
+
+#### Passo a passo
+
+**1. Inicie o processo Master (com interface web):**
+
+```bash
+locust -f tests/locustfile.py --master
+```
+
+O master abrirá a interface web e ficará aguardando os workers se conectarem.
+
+---
+
+**2. Em outros terminais, inicie os Workers:**
+
+```bash
+locust -f tests/locustfile.py --worker --master-host=127.0.0.1
+```
+
+Você pode abrir quantos workers desejar — **não há limite fixo**, apenas os recursos da sua máquina (CPU/RAM). Isso permite simular cargas bem mais altas com estabilidade.
+
+---
+
+**3. Acesse a interface web:**
+
+Abra o navegador e acesse:
+
+```
+http://localhost:8089
+```
+
+Na interface, você poderá:
+- Definir o número de usuários simultâneos
+- Taxa de spawn (usuários/segundo)
+- Iniciar/parar o teste
+- Acompanhar gráficos ao vivo com:
+  - Tempo de resposta
+  - Throughput
+  - Percentual de falhas
+- Exportar os resultados
