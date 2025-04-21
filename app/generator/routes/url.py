@@ -3,6 +3,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies import get_db
+from app.generator.exeception import ShortenUrlDeletionFailed
 from app.generator.schema import (
     GeneratorRequest,
     StandardResponse,
@@ -37,7 +38,7 @@ async def get_url(url_id: str, db: AsyncSession = Depends(get_db)):
         HTTPException: If the token is unsafe or the URL is not found.
     """
     if not is_safe_url_path(url_id):
-        raise HTTPException(status_code=400, detail="Unsafe URL provided")
+        raise HTTPException(status_code=400, detail="Bad token")
 
     if url := await retrieve_url(url_id, db):
         return url
@@ -82,11 +83,16 @@ async def delete_url(url_id: str, db: AsyncSession = Depends(get_db)):
         dict: A message indicating the deletion was successful.
     """
     try:
-        if not is_safe_url_path(url_id):
-            return {"success": False, "message": "Unsafe URL"}
+        if not is_safe_url_path(url_id) or not url_id:
+            raise HTTPException(status_code=400, detail="Bad token")
 
         await delete_url_token(url_id, db)
         return {"success": True, "data": {"message": "URL deleted successfully"}}
-    except Exception as e:
-        logger.error(f"Failed to delete token '{url_id}': {e}")
-        return {"success": False, "message": "Failed to delete URL"}
+
+    except HTTPException as e:
+        raise e
+    except ShortenUrlDeletionFailed:
+        raise HTTPException(status_code=400, detail="Could not delete the Token")
+    except Exception:
+        logger.error(f"Failed to delete URL {url_id}")
+        raise HTTPException(status_code=500, detail="Internal server error")

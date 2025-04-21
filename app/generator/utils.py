@@ -1,5 +1,5 @@
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlparse, unquote
 
 
 def validate_url_scheme(url: str) -> str:
@@ -22,14 +22,21 @@ def validate_url_scheme(url: str) -> str:
             "URL must start with http:// or https:// and include a valid domain"
         )
 
+    decoded = unquote(url)
+
     dangerous_patterns = [
-        r"(javascript:|vbscript:|data:)",
-        r"(<script|</script>)",
-        r"base64,",
+        r"(<script|</script>)",  # XSS script tags
+        r"javascript:\b",  # inline JS scheme
+        r"vbscript:\b",  # inline VBScript
+        r"data:[^,]+;base64,",  # data URI base64 injection
+        r"\bunion\s+select\b",  # SQL injection UNION
+        r"--|;|\bOR\b|\bAND\b",  # SQL injection operators
+        r"\.\./",  # path traversal
+        r"\bexec\b|\bcmd\b",  # command injection keywords
     ]
 
     for pattern in dangerous_patterns:
-        if re.search(pattern, url, re.IGNORECASE):
+        if re.search(pattern, decoded, re.IGNORECASE):
             raise ValueError("URL contains disallowed scheme or pattern")
 
     return url

@@ -1,15 +1,19 @@
+import logging
 from sqlalchemy import delete
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.core.cache import redis_client
+from app.generator.exeception import ShortenUrlDeletionFailed
 from app.generator.models import UrlShorted
 from app.settings import CACHE_DEFAULT_TIMEOUT, BASE_URL
 import string
 import secrets
 
 ALPHANUMERIC_CHARS = string.ascii_letters + string.digits
+
+logger = logging.getLogger(__name__)
 
 
 async def generate_url_token(url: str, db: AsyncSession) -> str:
@@ -86,8 +90,18 @@ async def delete_url_token(token: str, db: AsyncSession) -> None:
     Args:
         token (str): The token to delete.
         db (AsyncSession): The database session.
+
+    Raises:
+        ShortenUrlDeletionFailed: If the deletion from the database fails.
     """
+
     redis_client.delete(token)
     stmt = delete(UrlShorted).where(UrlShorted.id == token)
-    await db.execute(stmt)
-    await db.commit()
+
+    try:
+        await db.execute(stmt)
+        await db.commit()
+    except SQLAlchemyError as e:
+        await db.rollback()
+        logger.error(f"Failed to delete URL from database: {e}")
+        raise ShortenUrlDeletionFailed("Failed to delete URL from database") from e
