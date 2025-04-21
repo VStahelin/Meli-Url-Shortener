@@ -1,4 +1,5 @@
-import logging
+import logging.config
+import os
 import subprocess
 
 from contextlib import asynccontextmanager
@@ -11,10 +12,11 @@ from fastapi import HTTPException, FastAPI, APIRouter
 
 from prometheus_fastapi_instrumentator import Instrumentator
 
-logger = logging.getLogger(__name__)
 
-LOCK_KEY = "lock:consolidator"
-LOCK_EXPIRE = 10
+conf_path = os.path.join(os.path.dirname(__file__), "..", "logging.conf")
+logging.config.fileConfig(conf_path, disable_existing_loggers=False)
+
+logger = logging.getLogger("app.main")
 
 
 @asynccontextmanager

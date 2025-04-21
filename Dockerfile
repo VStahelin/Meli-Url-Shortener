@@ -33,4 +33,4 @@ COPY --from=builder /usr/local/bin/ /usr/local/bin/
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--workers", "12"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "12", "--log-config", "logging.conf"]

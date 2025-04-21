@@ -2,7 +2,6 @@ import re
 from urllib.parse import urlparse
 
 
-
 def validate_url_scheme(url: str) -> str:
     """
     Validates a URL to ensure it uses a safe scheme and doesn't contain known malicious patterns.
@@ -19,7 +18,9 @@ def validate_url_scheme(url: str) -> str:
     parsed = urlparse(url)
 
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
-        raise ValueError("URL must start with http:// or https:// and include a valid domain")
+        raise ValueError(
+            "URL must start with http:// or https:// and include a valid domain"
+        )
 
     dangerous_patterns = [
         r"(javascript:|vbscript:|data:)",

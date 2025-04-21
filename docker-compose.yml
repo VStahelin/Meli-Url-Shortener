@@ -18,12 +18,13 @@ services:
     env_file: *env_file
     volumes:
       - .:/src
-    command: >
-      gunicorn app.main:app -w 12 -k uvicorn.workers.UvicornWorker
-      -b 0.0.0.0:8000
-      --access-logfile -
-      --error-logfile -
-      --log-level info
+    command: [
+      "gunicorn", "app.main:app",
+      "-k", "uvicorn.workers.UvicornWorker",
+      "-b", "0.0.0.0:8000",
+      "--log-config", "logging.conf",
+      "--reload"
+    ]
     networks:
       - backend
 

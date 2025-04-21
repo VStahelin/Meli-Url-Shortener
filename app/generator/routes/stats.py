@@ -1,7 +1,6 @@
 import httpx
 from fastapi import APIRouter
 
-
 from app.generator.schema import RouteStats, StandardResponse
 from app.settings import PROMETHEUS_URL
 
@@ -61,7 +60,6 @@ async def get_latency_stats():
             count_total_resp,
         ]
     ):
-
         return {
             "success": False,
             "error": "Failed to query Prometheus",
