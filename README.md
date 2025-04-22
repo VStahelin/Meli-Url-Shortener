@@ -123,6 +123,13 @@ http://localhost:8000/metrics
     }
   }
   ```
+  
+  Exemplo via `curl`:
+  ```bash
+  curl -X POST http://localhost:8000/ \
+    -H 'Content-Type: application/json' \
+    -d '{"url": "https://exemplo.com"}'
+  ```
 
 ---
 
@@ -151,6 +158,10 @@ http://localhost:8000/metrics
     }
   }
   ```
+  Exemplo via `curl`:
+  ```bash
+  curl -X DELETE http://localhost:8000/XXYYZZ
+  ```
 
 ---
 
@@ -173,10 +184,23 @@ http://localhost:8000/metrics
     ]
   }
   ```
+  Exemplo via `curl`:
+  ```bash
+  curl -X GET http://localhost:8000/statics/
+  ```
 
 ---
 
 # ⚙️ Testes de Performance com Locust
+
+> 💡 **Importante**: É altamente recomendável rodar o Locust **fora do Docker** para evitar que o consumo do container afete os resultados.  
+> Para isso, crie um ambiente virtual Python localmente e instale os requisitos com:
+>
+> ```bash
+> python -m venv venv
+> source venv/bin/activate
+> pip install -r requirements.txt
+> ```
 
 Já existe um `locustfile.py` configurado para testar o endpoint `GET /{url_id}`. Basta garantir que URLs válidas estejam criadas na base.
 
@@ -198,7 +222,6 @@ Parâmetros:
   - Tempo médio de resposta
   - Percentual de requisições abaixo de 10ms
 
----
 
 ### 🧪 Testando com múltiplos workers (modo distribuído com interface web)
 
@@ -245,3 +268,18 @@ Na interface, você poderá:
   - Throughput
   - Percentual de falhas
 - Exportar os resultados
+
+---
+
+# 🧪 Testes Unitários
+
+> Também se recomenda executar os testes unitários **fora do Docker** para maior controle e legibilidade do output.
+
+### Passo a passo para executar localmente:
+
+```bash
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+pytest
+```
