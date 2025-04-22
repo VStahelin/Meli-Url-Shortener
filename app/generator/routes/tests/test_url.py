@@ -1,6 +1,7 @@
 import pytest
 from fastapi import status
 from httpx import InvalidURL
+import app.generator.service as service
 
 
 def test_get_url_shortened_url_redirects_success(make_client, monkeypatch, db_session):
@@ -99,10 +100,10 @@ def test_generate_shortened_url_with_bad_scheme_returns_400_bad_request(
 
     response = client.post("/", json={"url": bad})
 
-    assert response.status_code == status.HTTP_200_OK
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json() == {
         "success": False,
-        "message": "Invalid URL format",
+        "message": "Invalid URL",
         "data": None,
     }
 
@@ -157,4 +158,28 @@ def test_delete_shortened_url_with_malicious_token_returns_400_bad_request(
         return
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert response.json() == {"detail": "Bad token"}
+    assert response.json() == {"data": None, "message": "Bad token", "success": False}
+
+
+@pytest.mark.asyncio
+async def test_delete_url_token_raises_shorten_url_deletion_failed(
+    make_client, make_db_session, monkeypatch
+):
+    client = make_client()
+    token = "FAILME"
+
+    from app.generator.routes import url as route_module
+
+    async def broken_delete(tok, db):
+        raise service.ShortenUrlDeletionFailed("DB failure")
+
+    monkeypatch.setattr(route_module, "delete_url_token", broken_delete)
+
+    response = client.delete(f"/{token}")
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "success": False,
+        "data": None,
+        "message": "Could not delete the Token",
+    }

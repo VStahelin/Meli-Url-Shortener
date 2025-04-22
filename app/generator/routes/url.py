@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.responses import JSONResponse
 
 from app.dependencies import get_db
 from app.generator.exeception import ShortenUrlDeletionFailed
@@ -49,7 +50,7 @@ async def get_url(url_id: str, db: AsyncSession = Depends(get_db)):
 @router.post("/", response_model=StandardResponse[ShortenedURLResponse])
 async def generate_url(
     data: GeneratorRequest, db: AsyncSession = Depends(get_db)
-) -> dict:
+) -> JSONResponse:
     """
     Generates a shortened URL token for the provided URL.
 
@@ -64,10 +65,16 @@ async def generate_url(
     try:
         received_url = validate_url_scheme(data.url)
         shortened_url = await generate_url_token(received_url, db)
-        return {"success": True, "data": {"url": shortened_url}}
+        return JSONResponse(
+            status_code=200,
+            content={"success": True, "data": {"url": shortened_url}, "message": None},
+        )
     except ValueError as e:
         logger.warning(f"URL invalid data {data.url} — {e}")
-        return {"success": False, "message": "Invalid URL format"}
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "message": "Invalid URL", "data": None},
+        )
 
 
 @router.delete("/{url_id}", response_model=StandardResponse[DeleteURLResponse])
@@ -82,17 +89,33 @@ async def delete_url(url_id: str, db: AsyncSession = Depends(get_db)):
     Returns:
         dict: A message indicating the deletion was successful.
     """
-    try:
-        if not is_safe_url_path(url_id) or not url_id:
-            raise HTTPException(status_code=400, detail="Bad token")
+    if not is_safe_url_path(url_id) or not url_id:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "message": "Bad token", "data": None},
+        )
 
+    try:
         await delete_url_token(url_id, db)
         return {"success": True, "data": {"message": "URL deleted successfully"}}
 
-    except HTTPException as e:
-        raise e
     except ShortenUrlDeletionFailed:
-        raise HTTPException(status_code=400, detail="Could not delete the Token")
+        return JSONResponse(
+            status_code=400,
+            content={
+                "success": False,
+                "message": "Could not delete the Token",
+                "data": None,
+            },
+        )
+
     except Exception:
         logger.error(f"Failed to delete URL {url_id}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "message": "Internal server error",
+                "data": None,
+            },
+        )

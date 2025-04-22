@@ -12,7 +12,6 @@ from fastapi import HTTPException, FastAPI, APIRouter
 
 from prometheus_fastapi_instrumentator import Instrumentator
 
-
 conf_path = os.path.join(os.path.dirname(__file__), "..", "logging.conf")
 logging.config.fileConfig(conf_path, disable_existing_loggers=False)
 
